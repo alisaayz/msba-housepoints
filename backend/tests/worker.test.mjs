@@ -33,7 +33,7 @@ const editorEnv=()=>({DB:database(),ADMIN_PASSWORD:'test-editor-password',ADMIN_
 const adminRequest=(path,data,token)=>new Request('https://example.test/admin/'+path,{method:data?'POST':'GET',headers:{Origin:'https://alisaayz.github.io',...(data?{'Content-Type':'application/json'}:{}),...(token?{Authorization:'Bearer '+token}:{})},...(data?{body:JSON.stringify(data)}:{})});
 const unlock=async env=>(await (await worker.fetch(adminRequest('login',{password:env.ADMIN_PASSWORD}),env)).json()).token;
 test('editor writes require a valid server-verified session',async()=>{
- const env=editorEnv();for(const path of ['totals','reset','edit','delete','restore'])assert.equal((await worker.fetch(adminRequest(path,{totals:{M:0,S:0,B:0,A:0},id:crypto.randomUUID()}),env)).status,401);
+ const env=editorEnv();for(const path of ['names','totals','reset','edit','delete','restore'])assert.equal((await worker.fetch(adminRequest(path,{totals:{M:0,S:0,B:0,A:0},id:crypto.randomUUID()}),env)).status,401);
  assert.equal((await worker.fetch(adminRequest('login',{password:'incorrect'}),env)).status,401);
  assert.equal((await worker.fetch(adminRequest('state',null,'forged-token'),env)).status,401);
  const token=await unlock(env);assert.ok(token);assert.equal((await worker.fetch(adminRequest('state',null,token),env)).status,200);
@@ -55,4 +55,18 @@ test('reset clears public points and entries while retaining recoverable history
 test('repeated incorrect passwords are throttled',async()=>{
  const env=editorEnv();for(let i=0;i<5;i++)assert.equal((await worker.fetch(adminRequest('login',{password:'wrong'}),env)).status,401);
  assert.equal((await worker.fetch(adminRequest('login',{password:'wrong'}),env)).status,429);
+});
+
+test('shared names persist across reads and point operations without changing house identities',async()=>{
+ const env=editorEnv(),input=payload();await worker.fetch(request(input),env);const token=await unlock(env);
+ const names={M:'Monsters',S:'Stargazers',B:'Bears',A:'All Stars'};
+ let response=await worker.fetch(adminRequest('names',{houseNames:{...names,M:'  Monsters  '}},token),env);assert.equal(response.status,200);
+ let data=await response.json();assert.deepEqual(data.houseNames,names);assert.equal(data.totals.M,5);assert.equal(data.entries[0].house,'M');assert.equal(data.entries[0].id,input.id);
+ data=await (await worker.fetch(new Request('https://example.test/entries'),env)).json();assert.deepEqual(data.houseNames,names);
+ for(const invalid of [{...names,M:' '},{...names,S:'x'.repeat(41)},{M:'New name'},null])assert.equal((await worker.fetch(adminRequest('names',{houseNames:invalid},token),env)).status,400);
+ data=await (await worker.fetch(adminRequest('state',null,token),env)).json();assert.deepEqual(data.houseNames,names);
+ await worker.fetch(adminRequest('reset',{},token),env);data=await (await worker.fetch(new Request('https://example.test/entries'),env)).json();assert.deepEqual(data.houseNames,names);assert.deepEqual(data.totals,{M:0,S:0,B:0,A:0});
+});
+test('unnamed houses use their original labels',async()=>{
+ const data=await (await worker.fetch(new Request('https://example.test/entries'),editorEnv())).json();assert.deepEqual(data.houseNames,{M:'House M',S:'House S',B:'House B',A:'House A'});
 });

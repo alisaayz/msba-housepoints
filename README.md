@@ -14,9 +14,11 @@ Names, activities, and point amounts appear publicly in the shared history. Subm
 
 All houses were reset to **zero** at the user's request. House totals are stored in the shared database and can be edited independently of entry history.
 
+House names are shared across devices. Use **Save house names** in the unlocked editor to rename the labels (for example, M → Monsters); the fixed M/S/B/A identifiers and existing points remain intact. Resetting points preserves house names.
+
 ## Password-protected editor
 
-Open **Manage points** near the bottom of the website and enter the editor password. An unlocked editor can set house totals, edit a student's name/house/points/activity, delete entries, restore deleted entries, or reset all points and entries. Use **Lock editor** when finished; reloading also locks it.
+Open **Manage points** near the bottom of the website and enter the editor password. An unlocked editor can save custom names for the four houses, set house totals, edit a student's name/house/points/activity, delete entries, restore deleted entries, or reset all points and entries. Use **Lock editor** when finished; reloading also locks it.
 
 Deleted entries are excluded from the public history and remain recoverable under **Show deleted entries**. Editing an entry adjusts its house total by the difference; deleting subtracts its points, and restoring adds them back. Totals never fall below zero. Direct total changes do not rewrite history.
 

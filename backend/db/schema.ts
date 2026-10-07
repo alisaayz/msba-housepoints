@@ -9,4 +9,5 @@ export const entries=sqliteTable('entries',{
   deletedAt:text('deleted_at'),
 }, table=>[index('idx_entries_created_at').on(table.createdAt)]);
 export const houseTotals=sqliteTable('house_totals',{house:text('house').primaryKey(),points:integer('points').notNull().default(0)});
+export const houseNames=sqliteTable('house_names',{house:text('house').primaryKey(),name:text('name').notNull()});
 export const authAttempts=sqliteTable('auth_attempts',{key:text('key').primaryKey(),attempts:integer('attempts').notNull(),expires:integer('expires').notNull()});

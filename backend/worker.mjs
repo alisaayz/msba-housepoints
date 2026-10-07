@@ -46,13 +46,17 @@ async function requireAdmin(request,env){
 }
 function ensureHouses(env){return HOUSES.map(house=>env.DB.prepare('INSERT INTO house_totals(house,points) VALUES(?,0) ON CONFLICT(house) DO NOTHING').bind(house));}
 async function state(env,all=false){
- const [records,scores]=await env.DB.batch([env.DB.prepare('SELECT id,student,house,points,reason,created_at,deleted_at FROM entries '+(all?'':'WHERE deleted_at IS NULL ')+'ORDER BY created_at DESC,id DESC LIMIT 10001'),env.DB.prepare('SELECT house,points FROM house_totals')]);
+ const [records,scores,names]=await env.DB.batch([env.DB.prepare('SELECT id,student,house,points,reason,created_at,deleted_at FROM entries '+(all?'':'WHERE deleted_at IS NULL ')+'ORDER BY created_at DESC,id DESC LIMIT 10001'),env.DB.prepare('SELECT house,points FROM house_totals'),env.DB.prepare('SELECT house,name FROM house_names')]);
  if(records.results.length>10000)throw fail('The point history is too large to load completely.',503);
  const totals=Object.fromEntries(HOUSES.map(house=>[house,0]));for(const score of scores.results)if(HOUSES.includes(score.house))totals[score.house]=score.points;
- return {entries:records.results.map(entry),totals};
+ const houseNames=Object.fromEntries(HOUSES.map(house=>[house,'House '+house]));for(const row of names.results)if(HOUSES.includes(row.house))houseNames[row.house]=row.name;
+ return {entries:records.results.map(entry),totals,houseNames};
 }
 async function adminAction(path,input,env){
- if(path==='/admin/totals'){
+ if(path==='/admin/names'){
+  if(!input?.houseNames||HOUSES.some(house=>typeof input.houseNames[house]!=='string'||!input.houseNames[house].trim()||input.houseNames[house].trim().length>40))throw fail('Enter a house name from 1 to 40 characters for each letter.');
+  await env.DB.batch(HOUSES.map(house=>env.DB.prepare('INSERT INTO house_names(house,name) VALUES(?,?) ON CONFLICT(house) DO UPDATE SET name=excluded.name').bind(house,input.houseNames[house].trim())));
+ }else if(path==='/admin/totals'){
   if(!input.totals||HOUSES.some(house=>!Number.isSafeInteger(input.totals[house])||input.totals[house]<0||input.totals[house]>1000000))throw fail('Enter a whole total from 0 to 1,000,000 for each house.');
   await env.DB.batch(HOUSES.map(house=>env.DB.prepare('INSERT INTO house_totals(house,points) VALUES(?,?) ON CONFLICT(house) DO UPDATE SET points=excluded.points').bind(house,input.totals[house])));
  }else if(path==='/admin/reset'){

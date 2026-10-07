@@ -1,5 +1,5 @@
-import {editorRequest} from './service.mjs?v=5';
-import {HOUSES} from './ledger.mjs?v=5';
+import {editorRequest} from './service.mjs?v=7';
+import {HOUSES} from './ledger.mjs?v=7';
 const $=selector=>document.querySelector(selector);
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function initEditor(onChange){
@@ -7,9 +7,9 @@ export function initEditor(onChange){
  const status=$('#editor-status');
  function lock(message='Editor locked.'){token=null;expiresAt=0;editorState=null;$('#editor-workspace').hidden=true;$('#editor-login').hidden=false;$('#editor-login [name=password]').value='';$('#editor-entries').replaceChildren();$('#entry-edit-dialog').close();status.textContent=message;}
  function render(){
-  for(const house of HOUSES)$('#editor-totals [name='+house+']').value=editorState.totals[house];
+  for(const house of HOUSES){$('#editor-totals [name='+house+']').value=editorState.totals[house];$('#editor-names [name='+house+']').value=editorState.houseNames?.[house]||'House '+house;}
   const rows=editorState.entries.filter(entry=>$('#editor-deleted').checked?entry.deletedAt:!entry.deletedAt);
-  $('#editor-entries').innerHTML=rows.length?rows.map(entry=>`<tr><td>${escape(entry.student)}</td><td>${entry.house}</td><td>${entry.points}</td><td>${escape(entry.reason)}</td><td class="entry-actions">${entry.deletedAt?`<button type="button" data-action="restore" data-id="${escape(entry.id)}">Restore</button>`:`<button type="button" data-action="edit" data-id="${escape(entry.id)}">Edit</button><button type="button" data-action="delete" data-id="${escape(entry.id)}" class="danger">Delete</button>`}</td></tr>`).join(''):'<tr><td colspan="5">No entries to show.</td></tr>';
+  $('#editor-entries').innerHTML=rows.length?rows.map(entry=>`<tr><td>${escape(entry.student)}</td><td>${escape(editorState.houseNames?.[entry.house]||'House '+entry.house)} (${entry.house})</td><td>${entry.points}</td><td>${escape(entry.reason)}</td><td class="entry-actions">${entry.deletedAt?`<button type="button" data-action="restore" data-id="${escape(entry.id)}">Restore</button>`:`<button type="button" data-action="edit" data-id="${escape(entry.id)}">Edit</button><button type="button" data-action="delete" data-id="${escape(entry.id)}" class="danger">Delete</button>`}</td></tr>`).join(''):'<tr><td colspan="5">No entries to show.</td></tr>';
  }
  function show(data){editorState=data;$('#editor-login').hidden=true;$('#editor-workspace').hidden=false;render();onChange(data);}
  async function act(path,data){
@@ -27,6 +27,7 @@ export function initEditor(onChange){
  });
  $('#editor-lock').addEventListener('click',()=>lock());
  $('#editor-deleted').addEventListener('change',render);
+ $('#editor-names').addEventListener('submit',async event=>{event.preventDefault();const form=new FormData(event.currentTarget);try{await act('names',{houseNames:Object.fromEntries(HOUSES.map(house=>[house,String(form.get(house)).trim()]))});}catch{}});
  $('#editor-totals').addEventListener('submit',async event=>{event.preventDefault();const form=new FormData(event.currentTarget);try{await act('totals',{totals:Object.fromEntries(HOUSES.map(house=>[house,Number(form.get(house))]))});}catch{}});
  $('#editor-entries').addEventListener('click',async event=>{
   const button=event.target.closest('button[data-action]');if(!button)return;const entry=editorState.entries.find(item=>item.id===button.dataset.id);if(!entry)return;
