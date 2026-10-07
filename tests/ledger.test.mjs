@@ -13,12 +13,12 @@ test('student deductions are excluded but organizer corrections count', () => {
   assert.equal(parseEntry(issue({title:'[house-points] M -5',author_association:'NONE'})),null);
   assert.equal(parseEntry(issue({title:'[house-points] M -5'})).points,-5);
 });
-test('current totals remain the starting scores after refresh and new entries', () => {
-  assert.deepEqual(getStandings([]),[{house:'M',points:95,rank:3},{house:'S',points:83,rank:4},{house:'B',points:115,rank:2},{house:'A',points:134,rank:1}]);
+test('reset starts every house at zero and new entries still add correctly', () => {
+  assert.deepEqual(getStandings([]),[{house:'M',points:0,rank:1},{house:'S',points:0,rank:1},{house:'B',points:0,rank:1},{house:'A',points:0,rank:1}]);
   const standings=getStandings([parseEntry(issue({title:'[house-points] M +25',author_association:'NONE'}))]);
-  assert.equal(standings.find(h=>h.house==='M').points,120);
-  assert.equal(standings.reduce((sum,h)=>sum+h.points,0),452);
-  assert.deepEqual(STARTING_POINTS,{M:95,S:83,B:115,A:134});
+  assert.equal(standings.find(h=>h.house==='M').points,25);
+  assert.equal(standings.reduce((sum,h)=>sum+h.points,0),25);
+  assert.deepEqual(STARTING_POINTS,{M:0,S:0,B:0,A:0});
 });
 test('totals handle deductions and tied ranks', () => {
   const entries=[parseEntry(issue()),parseEntry(issue({number:2,title:'[house-points] M -5'})),parseEntry(issue({number:3,title:'[house-points] S +20'}))];
@@ -37,7 +37,7 @@ test('pagination includes every student entry', async () => {
     const values=url.endsWith('page=1') ? Array.from({length:100},(_,i)=>issue({number:i+1})) : [issue({number:101,title:'[house-points] B +30'}),issue({number:102,author_association:'NONE'})];
     return {ok:true,json:async()=>values};
   });
-  assert.equal(pages,2);assert.equal(entries.length,102);assert.equal(getStandings(entries).find(h=>h.house==='B').points,145);
+  assert.equal(pages,2);assert.equal(entries.length,102);assert.equal(getStandings(entries).find(h=>h.house==='B').points,30);
 });
 test('API failures do not silently publish an empty scoreboard', async () => {
   await assert.rejects(()=>fetchEntries(async()=>({ok:false,status:403})),/limit/);

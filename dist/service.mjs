@@ -6,12 +6,12 @@ export function validateStudentEntry(input) {
   if (typeof input.reason!=='string' || !input.reason.trim() || input.reason.trim().length>300) throw new Error('Add your activity (up to 300 characters).');
   return {student:input.student.trim(),house:input.house,points:input.points,reason:input.reason.trim()};
 }
-async function request(options={}) {
+async function request(options={},path='/entries') {
   let response;
-  try {response=await fetch(API_URL,{...options,cache:'no-store',signal:AbortSignal.timeout(15000)});} catch {throw new Error('Could not reach shared points. Check your connection and try again.');}
+  try {response=await fetch(API_URL.replace(/\/entries$/,'')+path,{...options,cache:'no-store',signal:AbortSignal.timeout(15000)});} catch {throw new Error('Could not reach shared points. Check your connection and try again.');}
   let body;
   try {body=await response.json();} catch {throw new Error('Shared points are temporarily unavailable. Please try again.');}
-  if (!response.ok) throw new Error(body.error || 'Shared points are temporarily unavailable.');
+  if (!response.ok) throw Object.assign(new Error(body.error || 'Shared points are temporarily unavailable.'),{status:response.status});
   return body;
 }
 export async function fetchStudentEntries() {
@@ -23,3 +23,5 @@ export async function saveStudentEntry(input) {
   const valid=validateStudentEntry(input);
   return request({method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:input.id,...valid})});
 }
+export async function fetchScoreboard(){const result=await request();if(!Array.isArray(result.entries)||!result.totals)throw new Error('The scoreboard returned an unexpected response.');return result;}
+export async function editorRequest(path,data,token){return request({method:data?'POST':'GET',headers:{...(data?{'Content-Type':'application/json'}:{}),...(token?{Authorization:'Bearer '+token}:{})},...(data?{body:JSON.stringify(data)}:{})},'/admin/'+path);}

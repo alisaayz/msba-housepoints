@@ -1,6 +1,6 @@
 export const REPOSITORY = 'alisaayz/msba-housepoints';
 export const HOUSES = ['M', 'S', 'B', 'A'];
-export const STARTING_POINTS = Object.freeze({M: 95, S: 83, B: 115, A: 134});
+export const STARTING_POINTS = Object.freeze({M: 0, S: 0, B: 0, A: 0});
 const ORGANIZERS = new Set(['OWNER', 'COLLABORATOR', 'MEMBER']);
 
 export function parseEntry(issue) {
