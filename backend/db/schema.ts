@@ -7,6 +7,7 @@ export const entries=sqliteTable('entries',{
   reason:text('reason').notNull(),
   createdAt:text('created_at').notNull(),
   deletedAt:text('deleted_at'),
+  status:text('status').notNull().default('approved'),
 }, table=>[index('idx_entries_created_at').on(table.createdAt)]);
 export const houseTotals=sqliteTable('house_totals',{house:text('house').primaryKey(),points:integer('points').notNull().default(0)});
 export const houseNames=sqliteTable('house_names',{house:text('house').primaryKey(),name:text('name').notNull()});

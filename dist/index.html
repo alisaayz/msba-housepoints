@@ -7,8 +7,8 @@
   <meta name="description" content="MSBA house points for shared activities, new friendships, and connections across the UCLA Anderson community.">
   <title>MSBA · House Points</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232774AE'/%3E%3Cpath d='M14 43V21l18 15 18-15v22' fill='none' stroke='%23FFD100' stroke-width='7' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./style.css?v=12">
-  <script type="module" src="./app.mjs?v=9"></script>
+  <link rel="stylesheet" href="./style.css?v=13">
+  <script type="module" src="./app.mjs?v=13"></script>
 </head>
 <body>
   <header class="site-header">
@@ -21,13 +21,13 @@
       <div class="competition-mark" aria-hidden="true"><span class="mark-letter m">M</span><span class="mark-letter s">S</span><span class="mark-letter b">B</span><span class="mark-letter a">A</span></div>
     </section>
     <section id="entry-panel" class="entry-panel" aria-labelledby="entry-title" hidden>
-      <div><p class="eyebrow">YOUR HOUSE. YOUR CONTRIBUTION.</p><h2 id="entry-title">Make it count.</h2><p>Choose your house, add the points you earned, and tell us what you did. Every student can contribute to their house’s score.</p><p class="muted">Submit each activity once. Your name and activity will appear in the shared point history.</p></div>
+      <div><p class="eyebrow">YOUR HOUSE. YOUR CONTRIBUTION.</p><h2 id="entry-title">Make it count.</h2><p>Choose your house, add the points you earned, and tell us what you did. Every student can contribute to their house’s score.</p><p class="muted">Submit each activity once. Faculty review each submission. Your name and activity appear in the shared history after approval.</p></div>
       <form id="points-form">
         <label>Your name<input name="student" maxlength="40" placeholder="Name or nickname" autocomplete="given-name" required></label>
         <div class="form-row"><label>House<select name="house" required><option value="M">House M</option><option value="S">House S</option><option value="B">House B</option><option value="A">House A</option></select></label><label>Points<input name="points" type="number" min="1" max="10000" step="1" placeholder="1" required></label></div>
         <label>What activity did you take part in?<input name="reason" maxlength="300" placeholder="Larry’s career curriculum, being on, being bold…" required></label>
         <button class="button dark" type="submit">Submit points</button>
-        <p class="form-note">No account needed. Submit here to update the shared scoreboard.</p>
+        <p class="form-note">No account needed. Your entry is pending approval until faculty approve it.</p>
         <p id="form-status" role="status"></p>
       </form>
     </section>
@@ -49,17 +49,18 @@
         <form id="editor-login"><label>Editor password<input name="password" type="password" autocomplete="current-password" maxlength="128" required></label><button class="button dark" type="submit">Unlock editor</button></form>
         <p id="editor-status" role="status"></p>
         <section id="editor-workspace" hidden aria-label="Points editor">
-          <div class="editor-heading"><h2>Edit points</h2><button id="editor-lock" type="button" class="button outline">Lock editor</button></div>
+          <div class="editor-heading"><h2>Faculty editor</h2><button id="editor-lock" type="button" class="button outline">Lock editor</button></div>
+          <section class="approval-section" aria-labelledby="approval-title"><div class="editor-heading"><h3 id="approval-title">Approval <span id="approval-count" class="approval-count">0 pending</span></h3><button type="button" class="button outline" id="approval-refresh">Refresh approvals</button></div><p class="editor-note">Review student submissions before they appear in the history or add to house totals. You can edit an entry before approving it.</p><div id="approval-list" class="approval-list"></div></section>
           <form id="editor-names"><h3>House names</h3><p class="editor-note">Give each house its name for this year. The large M, S, B, and A letters stay the same.</p><div class="editor-totals-grid"><label class="m">M · House name<input name="M" type="text" maxlength="40" required></label><label class="s">S · House name<input name="S" type="text" maxlength="40" required></label><label class="b">B · House name<input name="B" type="text" maxlength="40" required></label><label class="a">A · House name<input name="A" type="text" maxlength="40" required></label></div><button class="button dark" type="submit">Save house names</button></form>
           <h3 class="totals-title">House totals</h3>
-          <form id="editor-totals"><div class="editor-totals-grid"><label class="m">House M<input name="M" type="number" min="0" max="1000000" step="1" required></label><label class="s">House S<input name="S" type="number" min="0" max="1000000" step="1" required></label><label class="b">House B<input name="B" type="number" min="0" max="1000000" step="1" required></label><label class="a">House A<input name="A" type="number" min="0" max="1000000" step="1" required></label></div><p class="editor-note">Changing totals does not rewrite the entry history. Editing or deleting an entry adjusts its house total.</p><button class="button dark" type="submit">Save house totals</button></form>
-          <div class="editor-heading"><h3>Entries</h3><label class="deleted-toggle"><input id="editor-deleted" type="checkbox"> Show deleted entries</label></div>
-          <div class="editor-table-wrap"><table class="editor-table"><thead><tr><th>Name</th><th>House</th><th>Points</th><th>Activity</th><th>Actions</th></tr></thead><tbody id="editor-entries"></tbody></table></div>
+          <form id="editor-totals"><div class="editor-totals-grid"><label class="m">House M<input name="M" type="number" min="0" max="1000000" step="1" required></label><label class="s">House S<input name="S" type="number" min="0" max="1000000" step="1" required></label><label class="b">House B<input name="B" type="number" min="0" max="1000000" step="1" required></label><label class="a">House A<input name="A" type="number" min="0" max="1000000" step="1" required></label></div><p class="editor-note">Changing totals does not rewrite the entry history. Editing or deleting an approved entry adjusts its house total. Pending entries do not affect totals.</p><button class="button dark" type="submit">Save house totals</button></form>
+          <div class="editor-heading"><h3>Approved entries</h3><label class="deleted-toggle"><input id="editor-deleted" type="checkbox"> Show deleted / rejected entries</label></div>
+          <div class="editor-table-wrap"><table class="editor-table"><thead><tr><th>Name</th><th>House</th><th>Points</th><th>Activity</th><th>Status</th><th>Actions</th></tr></thead><tbody id="editor-entries"></tbody></table></div>
           <button class="button outline danger" id="editor-reset" type="button">Reset all points and entries</button>
         </section>
       </div>
     </details>
-    <dialog id="entry-edit-dialog" aria-labelledby="entry-edit-title"><form id="entry-edit-form"><div class="editor-heading"><h2 id="entry-edit-title">Edit entry</h2><button class="text-button" id="edit-close" type="button">Close</button></div><label>Name<input name="student" maxlength="40" required></label><div class="form-row"><label>House<select name="house"><option>M</option><option>S</option><option>B</option><option>A</option></select></label><label>Points<input name="points" type="number" min="1" max="10000" step="1" required></label></div><label>Activity<input name="reason" maxlength="300" required></label><p id="edit-status" role="status"></p><button class="button dark" type="submit">Save entry</button></form></dialog>
+    <dialog id="entry-edit-dialog" aria-labelledby="entry-edit-title"><form id="entry-edit-form"><div class="editor-heading"><h2 id="entry-edit-title">Edit entry</h2><button class="text-button" id="edit-close" type="button">Close</button></div><label>Name<input name="student" maxlength="40" required></label><div class="form-row"><label>House<select name="house"><option value="M">M</option><option value="S">S</option><option value="B">B</option><option value="A">A</option></select></label><label>Points<input name="points" type="number" min="1" max="10000" step="1" required></label></div><label>Activity<input name="reason" maxlength="300" required></label><p id="edit-status" role="status"></p><button class="button dark" type="submit">Save entry</button></form></dialog>
   </main>
   <footer><span>UCLA Anderson MSBA <span class="footer-dot">/</span> Connecting the MSBA community.</span><a href="#activity">View point history</a></footer>
   <noscript><p class="load-notice">Enable JavaScript to see the shared scoreboard.</p></noscript>

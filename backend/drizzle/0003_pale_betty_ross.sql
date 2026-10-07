@@ -1,0 +1,1 @@
+ALTER TABLE `entries` ADD `status` text DEFAULT 'approved' NOT NULL;

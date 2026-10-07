@@ -4,7 +4,7 @@ const encode=new TextEncoder();
 function headers(request){const origin=request.headers.get('Origin');return {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Vary':'Origin',...(ORIGINS.has(origin)?{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization'}:{})};}
 function json(request,data,status=200){return new Response(JSON.stringify(data),{status,headers:headers(request)});}
 function fail(message,status=400){return Object.assign(new Error(message),{status});}
-function entry(row){return {id:row.id,student:row.student,house:row.house,points:row.points,reason:row.reason,date:row.created_at,deletedAt:row.deleted_at||null};}
+function entry(row){return {id:row.id,student:row.student,house:row.house,points:row.points,reason:row.reason,date:row.created_at,deletedAt:row.deleted_at||null,status:row.status};}
 export function validateEntry(input){
  if(!input || typeof input!=='object' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(input.id||'')) throw fail('Please try submitting your entry again.');
  if(typeof input.student!=='string'||!input.student.trim()||input.student.trim().length>40) throw fail('Enter a name or nickname (up to 40 characters).');
@@ -46,7 +46,7 @@ async function requireAdmin(request,env){
 }
 function ensureHouses(env){return HOUSES.map(house=>env.DB.prepare('INSERT INTO house_totals(house,points) VALUES(?,0) ON CONFLICT(house) DO NOTHING').bind(house));}
 async function state(env,all=false){
- const [records,scores,names]=await env.DB.batch([env.DB.prepare('SELECT id,student,house,points,reason,created_at,deleted_at FROM entries '+(all?'':'WHERE deleted_at IS NULL ')+'ORDER BY created_at DESC,id DESC LIMIT 10001'),env.DB.prepare('SELECT house,points FROM house_totals'),env.DB.prepare('SELECT house,name FROM house_names')]);
+ const [records,scores,names]=await env.DB.batch([env.DB.prepare('SELECT id,student,house,points,reason,created_at,deleted_at,status FROM entries '+(all?'':"WHERE deleted_at IS NULL AND status='approved' ")+'ORDER BY created_at DESC,id DESC LIMIT 10001'),env.DB.prepare('SELECT house,points FROM house_totals'),env.DB.prepare('SELECT house,name FROM house_names')]);
  if(records.results.length>10000)throw fail('The point history is too large to load completely.',503);
  const totals=Object.fromEntries(HOUSES.map(house=>[house,0]));for(const score of scores.results)if(HOUSES.includes(score.house))totals[score.house]=score.points;
  const houseNames=Object.fromEntries(HOUSES.map(house=>[house,'House '+house]));for(const row of names.results)if(HOUSES.includes(row.house))houseNames[row.house]=row.name;
@@ -64,13 +64,16 @@ async function adminAction(path,input,env){
  }else{
   if(typeof input.id!=='string'||input.id.length>100)throw fail('Choose an entry.');
   const row=await env.DB.prepare('SELECT * FROM entries WHERE id=?').bind(input.id).first();if(!row)throw fail('That entry was not found.',404);
-  if(path==='/admin/edit'){
+  if(path==='/admin/approve'){
+   if(row.deleted_at)throw fail('Restore this entry before approving it.',409);
+   await env.DB.batch([...ensureHouses(env),env.DB.prepare("UPDATE house_totals SET points=points+(SELECT points FROM entries WHERE id=?) WHERE house=(SELECT house FROM entries WHERE id=?) AND EXISTS(SELECT 1 FROM entries WHERE id=? AND deleted_at IS NULL AND status='pending')").bind(row.id,row.id,row.id),env.DB.prepare("UPDATE entries SET status='approved' WHERE id=? AND deleted_at IS NULL AND status='pending'").bind(row.id)]);
+  }else if(path==='/admin/edit'){
    if(row.deleted_at)throw fail('Restore this entry before editing it.',409);const valid=validateEntry(input);
-   await env.DB.batch([...ensureHouses(env),env.DB.prepare('UPDATE house_totals SET points=MAX(0,points-CASE WHEN house=(SELECT house FROM entries WHERE id=? AND deleted_at IS NULL) THEN (SELECT points FROM entries WHERE id=?) ELSE 0 END+CASE WHEN house=? THEN ? ELSE 0 END) WHERE EXISTS(SELECT 1 FROM entries WHERE id=? AND deleted_at IS NULL)').bind(valid.id,valid.id,valid.house,valid.points,valid.id),env.DB.prepare('UPDATE entries SET student=?,house=?,points=?,reason=? WHERE id=? AND deleted_at IS NULL').bind(valid.student,valid.house,valid.points,valid.reason,valid.id)]);
+   await env.DB.batch([...ensureHouses(env),env.DB.prepare("UPDATE house_totals SET points=MAX(0,points-CASE WHEN house=(SELECT house FROM entries WHERE id=? AND deleted_at IS NULL) THEN (SELECT points FROM entries WHERE id=?) ELSE 0 END+CASE WHEN house=? THEN ? ELSE 0 END) WHERE EXISTS(SELECT 1 FROM entries WHERE id=? AND deleted_at IS NULL AND status='approved')").bind(valid.id,valid.id,valid.house,valid.points,valid.id),env.DB.prepare('UPDATE entries SET student=?,house=?,points=?,reason=? WHERE id=? AND deleted_at IS NULL').bind(valid.student,valid.house,valid.points,valid.reason,valid.id)]);
   }else if(path==='/admin/delete'){
-   await env.DB.batch([...ensureHouses(env),env.DB.prepare('UPDATE house_totals SET points=MAX(0,points-(SELECT points FROM entries WHERE id=?)) WHERE house=(SELECT house FROM entries WHERE id=?) AND EXISTS(SELECT 1 FROM entries WHERE id=? AND deleted_at IS NULL)').bind(row.id,row.id,row.id),env.DB.prepare('UPDATE entries SET deleted_at=? WHERE id=? AND deleted_at IS NULL').bind(new Date().toISOString(),row.id)]);
+   await env.DB.batch([...ensureHouses(env),env.DB.prepare("UPDATE house_totals SET points=MAX(0,points-(SELECT points FROM entries WHERE id=?)) WHERE house=(SELECT house FROM entries WHERE id=?) AND EXISTS(SELECT 1 FROM entries WHERE id=? AND deleted_at IS NULL AND status='approved')").bind(row.id,row.id,row.id),env.DB.prepare('UPDATE entries SET deleted_at=? WHERE id=? AND deleted_at IS NULL').bind(new Date().toISOString(),row.id)]);
   }else if(path==='/admin/restore'){
-   await env.DB.batch([...ensureHouses(env),env.DB.prepare('UPDATE house_totals SET points=points+(SELECT points FROM entries WHERE id=?) WHERE house=(SELECT house FROM entries WHERE id=?) AND EXISTS(SELECT 1 FROM entries WHERE id=? AND deleted_at IS NOT NULL)').bind(row.id,row.id,row.id),env.DB.prepare('UPDATE entries SET deleted_at=NULL WHERE id=? AND deleted_at IS NOT NULL').bind(row.id)]);
+   await env.DB.batch([...ensureHouses(env),env.DB.prepare("UPDATE house_totals SET points=points+(SELECT points FROM entries WHERE id=?) WHERE house=(SELECT house FROM entries WHERE id=?) AND EXISTS(SELECT 1 FROM entries WHERE id=? AND deleted_at IS NOT NULL AND status='approved')").bind(row.id,row.id,row.id),env.DB.prepare('UPDATE entries SET deleted_at=NULL WHERE id=? AND deleted_at IS NOT NULL').bind(row.id)]);
   }else throw fail('Not found',404);
  }
  return state(env,true);
@@ -95,10 +98,10 @@ export default{async fetch(request,env){
   if(request.method!=='POST')throw fail('Method not allowed',405);
   if(!ORIGINS.has(origin))throw fail('Submit through the house points website.',403);
   const input=validateEntry(await readJson(request));
-  const result=await env.DB.batch([env.DB.prepare('INSERT INTO house_totals(house,points) VALUES(?,0) ON CONFLICT(house) DO NOTHING').bind(input.house),env.DB.prepare('UPDATE house_totals SET points=points+? WHERE house=? AND NOT EXISTS(SELECT 1 FROM entries WHERE id=?)').bind(input.points,input.house,input.id),env.DB.prepare('INSERT INTO entries(id,student,house,points,reason,created_at) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING').bind(input.id,input.student,input.house,input.points,input.reason,new Date().toISOString())]);
+  const result=await env.DB.prepare("INSERT INTO entries(id,student,house,points,reason,created_at,status) VALUES(?,?,?,?,?,?,'pending') ON CONFLICT(id) DO NOTHING").bind(input.id,input.student,input.house,input.points,input.reason,new Date().toISOString()).run();
   const saved=await env.DB.prepare('SELECT * FROM entries WHERE id=?').bind(input.id).first();
   if(saved.deleted_at)throw fail('This entry was removed. Refresh before submitting a new entry.',409);
   if(['student','house','points','reason'].some(field=>saved[field]!==input[field]))throw fail('That submission was already saved with different details. Refresh and try again.',409);
-  return json(request,{entry:entry(saved),...(await state(env))},result[2].meta?.changes?201:200);
+  return json(request,{entry:entry(saved),...(await state(env))},result.meta?.changes?201:200);
  }catch(error){if(!error.status)console.error('Point storage failed:',error.message);return json(request,{error:error.status?error.message:'Shared points are temporarily unavailable. Please try again.'},error.status||503);}
 }};

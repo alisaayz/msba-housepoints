@@ -1,6 +1,6 @@
-import {initEditor} from './admin.mjs?v=7';
-import {HOUSES, getStandings, STARTING_POINTS} from './ledger.mjs?v=7';
-import {validateStudentEntry,fetchScoreboard,saveStudentEntry} from './service.mjs?v=7';
+import {initEditor} from './admin.mjs?v=13';
+import {HOUSES, getStandings, STARTING_POINTS} from './ledger.mjs?v=13';
+import {validateStudentEntry,fetchScoreboard,saveStudentEntry} from './service.mjs?v=13';
 const $ = selector => document.querySelector(selector);
 const format = number => new Intl.NumberFormat('en-US').format(number);
 let entries = [], loaded = false, busy = false, lastLoad = 0, showAllEntries = false;
@@ -77,10 +77,10 @@ async function submitEntry(input) {
     dataRevision++;
     entries=result.entries;totals=result.totals;houseNames=result.houseNames||houseNames;
     loaded=true;lastLoad=Date.now();pendingEntry=null;render();$('#load-notice').hidden=true;
-    $('#sync-status').textContent='Points saved';
-    $('#form-status').textContent=`Saved! +${format(valid.points)} points for ${houseName(valid.house)}. Thanks, ${valid.student}.`;
+    $('#sync-status').textContent='Approved scoreboard';
+    $('#form-status').textContent=result.entry.status==='pending'?`Submitted! Your entry is pending approval: ${valid.points} ${valid.points===1?'point':'points'} for ${houseName(valid.house)}. Faculty will review it before it appears in the history or adds to your house total. Thanks, ${valid.student}.`:'Your entry has already been approved and posted.';
     $('#points-form [name=points]').value='';$('#points-form [name=reason]').value='';
-    return {status:'saved',entry:result.entry,standings:displayedStandings()};
+    return {status:result.entry.status,entry:result.entry,standings:displayedStandings()};
   } catch(error) {$('#form-status').textContent=error.message+' Your entry is still here; you can retry.';throw error;}
   finally {saving=false;button.disabled=false;button.textContent='Submit points';}
 }
@@ -94,7 +94,7 @@ $('#points-form').addEventListener('submit', async event => {
 window.addEventListener('focus', () => {if (Date.now() - lastLoad > 30000) void refresh();});
 
 render();
-initEditor(state=>{dataRevision++;entries=state.entries.filter(entry=>!entry.deletedAt);totals=state.totals;houseNames=state.houseNames||houseNames;loaded=true;lastLoad=Date.now();render();$('#load-notice').hidden=true;$('#sync-status').textContent='Updated by editor';});
+initEditor(state=>{dataRevision++;entries=state.entries.filter(entry=>!entry.deletedAt&&entry.status==='approved');totals=state.totals;houseNames=state.houseNames||houseNames;loaded=true;lastLoad=Date.now();render();$('#load-notice').hidden=true;$('#sync-status').textContent='Updated by editor';});
 void refresh();
 
 if (document.modelContext?.registerTool) {
@@ -103,6 +103,6 @@ if (document.modelContext?.registerTool) {
   for (const tool of [
     {name:'read_house_scoreboard',description:'Read the displayed shared MSBA house standings and point entries.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute:() => ({loaded,standings:loaded ? displayedStandings() : [],houseNames,entries,sync:$('#sync-status').textContent})},
     {name:'stage_house_point_entry',description:'Fill the visible student point form with name, house, points, and activity. Does not save; use Submit points to save.',inputSchema:{type:'object',properties:{student:{type:'string',minLength:1,maxLength:40},house:{type:'string',enum:HOUSES},points:{type:'integer',minimum:1,maximum:10000},reason:{type:'string',minLength:1,maxLength:300}},required:['student','house','points','reason'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute:input => {const valid=validateStudentEntry(input);openEntry(false);for(const field of ['student','house','points','reason']) $('#points-form [name='+field+']').value=valid[field];$('#form-status').textContent='Entry prepared. Submit points to save.';return {status:'staged',...valid};}},
-    {name:'submit_house_point_entry',description:'Save a student’s name, house, points, and activity to the public shared scoreboard. No login required; completes a submission.',inputSchema:{type:'object',properties:{student:{type:'string',minLength:1,maxLength:40},house:{type:'string',enum:HOUSES},points:{type:'integer',minimum:1,maximum:10000},reason:{type:'string',minLength:1,maxLength:300}},required:['student','house','points','reason'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute:async input => {const valid=validateStudentEntry(input);openEntry(false);for(const field of ['student','house','points','reason']) $('#points-form [name='+field+']').value=valid[field];return submitEntry(valid);}},
+    {name:'submit_house_point_entry',description:'Submit a student’s name, house, points, and activity for faculty approval. No login required; points and history change only after approval.',inputSchema:{type:'object',properties:{student:{type:'string',minLength:1,maxLength:40},house:{type:'string',enum:HOUSES},points:{type:'integer',minimum:1,maximum:10000},reason:{type:'string',minLength:1,maxLength:300}},required:['student','house','points','reason'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute:async input => {const valid=validateStudentEntry(input);openEntry(false);for(const field of ['student','house','points','reason']) $('#points-form [name='+field+']').value=valid[field];return submitEntry(valid);}},
   ]) {try {Promise.resolve(document.modelContext.registerTool(tool,{signal:lifecycle.signal})).catch(() => {});} catch {}}
 }
