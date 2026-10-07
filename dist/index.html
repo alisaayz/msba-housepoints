@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#141528">
+  <meta name="description" content="The shared MSBA house competition scoreboard. Follow houses M, S, B and A, and celebrate every point.">
+  <title>MSBA · House Points</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23141528'/%3E%3Cpath d='M14 43V21l18 15 18-15v22' fill='none' stroke='%23b9f764' stroke-width='7' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="MSBA House Points home"><span class="brand-mark">m<span>s</span>b<span>a</span></span><span class="brand-label">HOUSE POINTS</span></a>
+    <div class="header-actions"><a class="history-link" href="#activity">Point history</a><button class="button dark" id="organizer-toggle" aria-expanded="false" aria-controls="organizer-panel">Add points <span aria-hidden="true">+</span></button></div>
+  </header>
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <div><p class="eyebrow"><span class="small-square" aria-hidden="true"></span> THE MSBA HOUSE COMPETITION</p><h1 id="page-title">Four houses.<br><span>One top spot.</span></h1><p class="intro-copy">Big wins. Small victories. Every point counts.</p></div>
+      <div class="competition-mark" aria-hidden="true"><span class="mark-letter m">M</span><span class="mark-letter s">S</span><span class="mark-letter b">B</span><span class="mark-letter a">A</span></div>
+    </section>
+    <section id="organizer-panel" class="organizer-panel" aria-labelledby="organizer-title" hidden>
+      <div><p class="eyebrow">FOR ORGANIZERS</p><h2 id="organizer-title">Make it count.</h2><p>Choose a house, enter the points, and save the entry on GitHub. Only entries from the repository owner and collaborators count toward the scoreboard.</p><p class="muted">Use a negative number to deduct points. Entries and reasons are public.</p></div>
+      <form id="points-form">
+        <div class="form-row"><label>House<select name="house" required><option value="M">House M</option><option value="S">House S</option><option value="B">House B</option><option value="A">House A</option></select></label><label>Points<input name="points" type="number" min="-10000" max="10000" step="1" placeholder="25" required></label></div>
+        <label>What earned the points?<input name="reason" maxlength="300" placeholder="Case competition win, team spirit…" required></label>
+        <button class="button dark" type="submit">Continue to GitHub</button>
+        <p class="form-note">Sign in to GitHub, then click <strong>Create</strong> to save. Return here and refresh the scoreboard.</p>
+        <p id="form-status" role="status"></p>
+      </form>
+    </section>
+    <section class="standings" aria-labelledby="standings-title">
+      <div class="section-top"><div><p class="eyebrow">THE RACE IS ON</p><h2 id="standings-title">House standings</h2></div><div class="sync-area"><span id="sync-status" role="status">Loading shared scoreboard…</span><button class="refresh-button" id="refresh" aria-label="Refresh scoreboard"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1"/></svg></button></div></div>
+      <p id="load-notice" class="load-notice" hidden></p>
+      <div class="house-grid" id="house-grid" aria-live="polite"></div>
+      <div class="race-summary"><p id="race-message">The scoreboard is getting ready.</p><span id="total-points">— points in play</span></div>
+    </section>
+    <section class="activity" id="activity" aria-labelledby="activity-title">
+      <div class="section-top"><div><p class="eyebrow">EVERY POINT HAS A STORY</p><h2 id="activity-title">The latest moves</h2></div><label class="filter-label"><span class="sr-only">Filter history by house</span><select id="house-filter"><option value="all">All houses</option><option value="M">House M</option><option value="S">House S</option><option value="B">House B</option><option value="A">House A</option></select></label></div>
+      <div id="activity-list"></div>
+      <button class="text-button" id="show-more" hidden>Show more entries</button>
+    </section>
+    <aside class="organizer-help"><span class="help-symbol" aria-hidden="true">+</span><div><h3>A win worth recording?</h3><p>Organizers can add points with a reason so everyone can follow the competition.</p></div><button class="button outline" id="bottom-add">Add points</button></aside>
+  </main>
+  <footer><span>MSBA <span class="footer-dot">/</span> A little friendly competition.</span><a href="https://github.com/alisaayz/msba-housepoints/issues" target="_blank" rel="noopener noreferrer">Manage point entries</a></footer>
+  <noscript><p class="load-notice">Enable JavaScript to see the shared scoreboard.</p></noscript>
+</body>
+</html>
