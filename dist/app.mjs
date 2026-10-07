@@ -10,7 +10,7 @@ function render() {
   const leaders = standings.filter(house => house.rank === 1);
   $('#house-grid').innerHTML = standings.map(({house, points, rank}) => `<article class="house-card ${house.toLowerCase()}" aria-label="House ${house}, ${loaded ? `${points} points, rank ${rank}` : 'loading'}"><div class="house-top"><span class="house-name">HOUSE ${house}</span><span class="house-rank">${loaded ? (leaders.length === 4 ? 'Ready' : rank === 1 ? (leaders.length > 1 ? 'Joint leader' : 'Leading') : `#${rank}`) : 'Loading'}</span></div><div class="house-letter" aria-hidden="true">${house}</div><div class="score-row"><span class="score">${loaded ? format(points) : '—'}</span><span class="score-label">points</span></div><div class="house-bar" aria-hidden="true"><div class="house-bar-fill" style="width:${maximum ? Math.max(0, points) / maximum * 100 : 0}%"></div></div></article>`).join('');
   $('#total-points').textContent = loaded ? `${format(standings.reduce((sum, house) => sum + house.points, 0))} points in play` : '— points in play';
-  $('#race-message').textContent = !loaded ? 'The scoreboard is getting ready.' : entries.length === 0 ? 'A clean slate. Who will make the first move?' : leaders.length === 4 ? 'All four houses are tied. The next point could change everything.' : leaders.length > 1 ? `Houses ${leaders.map(house => house.house).join(' & ')} share the lead.` : `House ${leaders[0].house} leads by ${format(leaders[0].points - [...standings].sort((a,b) => b.points - a.points)[1].points)} points. The chase is on.`;
+  $('#race-message').textContent = !loaded ? 'The scoreboard is getting ready.' : leaders.length === 4 ? 'All four houses are tied. The next point could change everything.' : leaders.length > 1 ? `Houses ${leaders.map(house => house.house).join(' & ')} share the lead.` : `House ${leaders[0].house} leads by ${format(leaders[0].points - [...standings].sort((a,b) => b.points - a.points)[1].points)} points. The chase is on.`;
   renderActivity();
 }
 
@@ -19,8 +19,8 @@ function renderActivity() {
   const filtered = entries.filter(entry => house === 'all' || entry.house === house);
   $('#activity-list').innerHTML = filtered.length ? filtered.slice(0, visibleCount).map(entry => {
     const date = new Intl.DateTimeFormat('en-US', {month:'short',day:'numeric',year:'numeric'}).format(new Date(entry.date));
-    return `<article class="activity-row"><span class="activity-badge ${entry.house.toLowerCase()}">${entry.house}</span><div class="activity-details"><p class="activity-reason">${escape(entry.reason)}</p><p class="activity-meta">House ${entry.house} · ${escape(date)} · <a href="${escape(entry.url)}" target="_blank" rel="noopener noreferrer">@${escape(entry.organizer)}</a></p></div><div class="activity-points ${entry.points < 0 ? 'negative' : ''}">${entry.points > 0 ? '+' : '−'}${format(Math.abs(entry.points))}<span>points</span></div></article>`;
-  }).join('') : `<div class="empty-state"><div class="empty-symbol" aria-hidden="true">+</div><h3>${!loaded ? 'Getting the latest points' : house !== 'all' ? `House ${house} is ready for its first points.` : 'The first move is yours.'}</h3><p>${!loaded ? 'Connecting to the shared scoreboard.' : 'No point entries yet. Organizers can record the first win with Add points.'}</p></div>`;
+    return `<article class="activity-row"><span class="activity-badge ${entry.house.toLowerCase()}">${entry.house}</span><div class="activity-details"><p class="activity-reason">${escape(entry.reason)}</p><p class="activity-meta">House ${entry.house} · ${escape(date)} · <a href="${escape(entry.url)}" target="_blank" rel="noopener noreferrer">@${escape(entry.student)}</a></p></div><div class="activity-points ${entry.points < 0 ? 'negative' : ''}">${entry.points > 0 ? '+' : '−'}${format(Math.abs(entry.points))}<span>points</span></div></article>`;
+  }).join('') : `<div class="empty-state"><div class="empty-symbol" aria-hidden="true">+</div><h3>${!loaded ? 'Getting the latest points' : house !== 'all' ? `House ${house} is ready for its next win.` : 'Your next win belongs here.'}</h3><p>${!loaded ? 'Connecting to the shared scoreboard.' : 'The current house totals are recorded. Add your next activity and earned points to keep the competition going.'}</p></div>`;
   $('#show-more').hidden = filtered.length <= visibleCount;
 }
 
@@ -39,14 +39,14 @@ async function refresh() {
   } finally {busy = false; $('#refresh').disabled = false;}
 }
 
-function openOrganizer(scroll = true) {
-  $('#organizer-panel').hidden = false; $('#organizer-toggle').setAttribute('aria-expanded','true');
-  if (scroll) {$('#organizer-panel').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',block:'start'}); $('#points-form select').focus({preventScroll:true});}
+function openEntry(scroll = true) {
+  $('#entry-panel').hidden = false; $('#entry-toggle').setAttribute('aria-expanded','true');
+  if (scroll) {$('#entry-panel').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',block:'start'}); $('#points-form select').focus({preventScroll:true});}
 }
-$('#organizer-toggle').addEventListener('click', () => {
-  if ($('#organizer-panel').hidden) openOrganizer(); else {$('#organizer-panel').hidden = true; $('#organizer-toggle').setAttribute('aria-expanded','false');}
+$('#entry-toggle').addEventListener('click', () => {
+  if ($('#entry-panel').hidden) openEntry(); else {$('#entry-panel').hidden = true; $('#entry-toggle').setAttribute('aria-expanded','false');}
 });
-$('#bottom-add').addEventListener('click', () => openOrganizer());
+$('#bottom-add').addEventListener('click', () => openEntry());
 $('#refresh').addEventListener('click', refresh);
 $('#house-filter').addEventListener('change', () => {visibleCount = 12; renderActivity();});
 $('#show-more').addEventListener('click', () => {visibleCount += 12; renderActivity();});
@@ -79,6 +79,6 @@ if (document.modelContext?.registerTool) {
   window.addEventListener('pagehide', () => lifecycle.abort(), {once:true});
   for (const tool of [
     {name:'read_house_scoreboard',description:'Read the displayed shared MSBA house standings and point entries.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute:() => ({loaded,standings:loaded ? getStandings(entries) : [],entries,sync:$('#sync-status').textContent})},
-    {name:'stage_house_point_entry',description:'Fill the organizer point form. Does not save, publish, or open GitHub; the organizer must continue and save on GitHub.',inputSchema:{type:'object',properties:{house:{type:'string',enum:HOUSES},points:{type:'integer',minimum:-10000,maximum:10000},reason:{type:'string',minLength:1,maxLength:300}},required:['house','points','reason'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute:input => {entryUrl(input);openOrganizer(false);$('#points-form [name=house]').value=input.house;$('#points-form [name=points]').value=input.points;$('#points-form [name=reason]').value=input.reason;$('#form-status').textContent='Entry prepared. Continue to GitHub to save.';return {status:'staged',...input};}},
+    {name:'stage_house_point_entry',description:'Fill the student point form. Does not save, publish, or open GitHub; the student must continue and save on GitHub.',inputSchema:{type:'object',properties:{house:{type:'string',enum:HOUSES},points:{type:'integer',minimum:1,maximum:10000},reason:{type:'string',minLength:1,maxLength:300}},required:['house','points','reason'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute:input => {entryUrl(input);openEntry(false);$('#points-form [name=house]').value=input.house;$('#points-form [name=points]').value=input.points;$('#points-form [name=reason]').value=input.reason;$('#form-status').textContent='Entry prepared. Continue to GitHub to save.';return {status:'staged',...input};}},
   ]) {try {Promise.resolve(document.modelContext.registerTool(tool,{signal:lifecycle.signal})).catch(() => {});} catch {}}
 }
