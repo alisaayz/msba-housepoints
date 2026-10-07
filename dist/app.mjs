@@ -16,7 +16,10 @@ function render() {
   const maximum = Math.max(0, ...standings.map(house => house.points));
   $('#house-grid').innerHTML = standings.map(({house, points}) => `<article class="house-card ${house.toLowerCase()}" aria-label="${escape(houseName(house))}, house ${house}, ${loaded ? `${points} points` : 'loading'}"><div class="house-top"><span class="house-name">${escape(houseName(house))}</span></div><div class="house-letter" aria-hidden="true">${house}</div><div class="score-row"><span class="score">${loaded ? format(points) : '—'}</span><span class="score-label">points</span></div><div class="house-bar" aria-hidden="true"><div class="house-bar-fill" style="width:${maximum ? Math.max(0, points) / maximum * 100 : 0}%"></div></div></article>`).join('');
   $('#total-points').textContent = loaded ? `${format(standings.reduce((sum, house) => sum + house.points, 0))} points earned together` : '— points earned together';
-  $('#race-message').textContent = !loaded ? 'The scoreboard is getting ready.' : entries.length ? `${format(entries.length)} ${entries.length === 1 ? 'contribution' : 'contributions'} shared by our community.` : 'Share your next activity with the community.';
+  const leaders=standings.filter(house=>house.points===maximum);
+  const leaderNames=new Intl.ListFormat('en-US',{style:'long',type:'conjunction'}).format(leaders.map(({house})=>houseName(house)));
+  const margin=leaders.length===1?maximum-Math.max(...standings.filter(house=>house.house!==leaders[0].house).map(house=>house.points)):0;
+  $('#race-message').textContent = !loaded ? 'The scoreboard is getting ready.' : leaders.length===1 ? `${leaderNames} is leading by ${format(margin)} ${margin===1?'point':'points'}.` : leaders.length===HOUSES.length ? `All houses are tied at ${format(maximum)} ${maximum===1?'point':'points'}.` : `${leaderNames} are tied for the lead at ${format(maximum)} ${maximum===1?'point':'points'}.`;
   renderActivity();
 }
 
