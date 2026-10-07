@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#2774AE">
-  <meta name="description" content="The shared MSBA house competition scoreboard. Follow houses M, S, B and A, and celebrate every point.">
+  <meta name="description" content="MSBA house points for shared activities, new friendships, and connections across the UCLA Anderson community.">
   <title>MSBA · House Points</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232774AE'/%3E%3Cpath d='M14 43V21l18 15 18-15v22' fill='none' stroke='%23FFD100' stroke-width='7' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./style.css?v=3">
-  <script type="module" src="./app.mjs?v=3"></script>
+  <link rel="stylesheet" href="./style.css?v=4">
+  <script type="module" src="./app.mjs?v=4"></script>
 </head>
 <body>
   <header class="site-header">
@@ -17,7 +17,7 @@
   </header>
   <main>
     <section class="intro" aria-labelledby="page-title">
-      <div><p class="eyebrow"><span class="small-square" aria-hidden="true"></span> THE MSBA HOUSE COMPETITION</p><h1 id="page-title">Four houses.<br><span>One top spot.</span></h1><p class="intro-copy">Big wins. Small victories. Every point counts.</p></div>
+      <div><p class="eyebrow"><span class="small-square" aria-hidden="true"></span> THE MSBA COMMUNITY</p><h1 id="page-title">Every point<br><span>counts.</span></h1><p class="intro-copy">Building connections through shared experiences.</p></div>
       <div class="competition-mark" aria-hidden="true"><span class="mark-letter m">M</span><span class="mark-letter s">S</span><span class="mark-letter b">B</span><span class="mark-letter a">A</span></div>
     </section>
     <section id="entry-panel" class="entry-panel" aria-labelledby="entry-title" hidden>
@@ -25,26 +25,26 @@
       <form id="points-form">
         <label>Your name<input name="student" maxlength="40" placeholder="Name or nickname" autocomplete="given-name" required></label>
         <div class="form-row"><label>House<select name="house" required><option value="M">House M</option><option value="S">House S</option><option value="B">House B</option><option value="A">House A</option></select></label><label>Points<input name="points" type="number" min="1" max="10000" step="1" placeholder="25" required></label></div>
-        <label>What did you earn points for?<input name="reason" maxlength="300" placeholder="Case competition win, team spirit…" required></label>
+        <label>What activity did you take part in?<input name="reason" maxlength="300" placeholder="House dinner, study group, MSBA meetup…" required></label>
         <button class="button dark" type="submit">Submit points</button>
         <p class="form-note">No account needed. Submit here to update the shared scoreboard.</p>
         <p id="form-status" role="status"></p>
       </form>
     </section>
     <section class="standings" aria-labelledby="standings-title">
-      <div class="section-top"><div><p class="eyebrow">THE RACE IS ON</p><h2 id="standings-title">House standings</h2></div><div class="sync-area"><span id="sync-status" role="status">Loading shared scoreboard…</span><button class="refresh-button" id="refresh" aria-label="Refresh scoreboard"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1"/></svg></button></div></div>
+      <div class="section-top"><div><p class="eyebrow">SHARED EXPERIENCES</p><h2 id="standings-title">House points</h2></div><div class="sync-area"><span id="sync-status" role="status">Loading shared scoreboard…</span><button class="refresh-button" id="refresh" aria-label="Refresh scoreboard"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1"/></svg></button></div></div>
       <p id="load-notice" class="load-notice" hidden></p>
       <div class="house-grid" id="house-grid" aria-live="polite"></div>
-      <div class="race-summary"><p id="race-message">The scoreboard is getting ready.</p><span id="total-points">— points in play</span></div>
+      <div class="race-summary"><p id="race-message">The scoreboard is getting ready.</p><span id="total-points">— points earned together</span></div>
     </section>
     <section class="activity" id="activity" aria-labelledby="activity-title">
-      <div class="section-top"><div><p class="eyebrow">EVERY POINT HAS A STORY</p><h2 id="activity-title">The latest moves</h2></div><label class="filter-label"><span class="sr-only">Filter history by house</span><select id="house-filter"><option value="all">All houses</option><option value="M">House M</option><option value="S">House S</option><option value="B">House B</option><option value="A">House A</option></select></label></div>
+      <div class="section-top"><div><p class="eyebrow">EVERY POINT HAS A STORY</p><h2 id="activity-title">Community moments</h2></div><label class="filter-label"><span class="sr-only">Filter history by house</span><select id="house-filter"><option value="all">All houses</option><option value="M">House M</option><option value="S">House S</option><option value="B">House B</option><option value="A">House A</option></select></label></div>
       <div id="activity-list"></div>
       <button class="text-button" id="show-more" hidden>Show more entries</button>
     </section>
-    <aside class="entry-help"><span class="help-symbol" aria-hidden="true">+</span><div><h3>A win worth recording?</h3><p>Add your activity and earned points to help your house climb the standings.</p></div><button class="button outline" id="bottom-add">Add points</button></aside>
+    <aside class="entry-help"><span class="help-symbol" aria-hidden="true">+</span><div><h3>Spent time with your classmates?</h3><p>Record your shared activity and add points for your house.</p></div><button class="button outline" id="bottom-add">Add points</button></aside>
   </main>
-  <footer><span>UCLA Anderson MSBA <span class="footer-dot">/</span> A little friendly competition.</span><a href="#activity">View point history</a></footer>
+  <footer><span>UCLA Anderson MSBA <span class="footer-dot">/</span> Connecting the MSBA community.</span><a href="#activity">View point history</a></footer>
   <noscript><p class="load-notice">Enable JavaScript to see the shared scoreboard.</p></noscript>
 </body>
 </html>

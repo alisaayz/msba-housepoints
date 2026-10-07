@@ -1,5 +1,5 @@
-import {HOUSES, getStandings} from './ledger.mjs?v=3';
-import {validateStudentEntry,fetchStudentEntries,saveStudentEntry} from './service.mjs?v=3';
+import {HOUSES, getStandings} from './ledger.mjs?v=4';
+import {validateStudentEntry,fetchStudentEntries,saveStudentEntry} from './service.mjs?v=4';
 const $ = selector => document.querySelector(selector);
 const format = number => new Intl.NumberFormat('en-US').format(number);
 let entries = [], loaded = false, busy = false, lastLoad = 0, visibleCount = 12;
@@ -9,10 +9,9 @@ const escape = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;',
 function render() {
   const standings = getStandings(entries);
   const maximum = Math.max(0, ...standings.map(house => house.points));
-  const leaders = standings.filter(house => house.rank === 1);
-  $('#house-grid').innerHTML = standings.map(({house, points, rank}) => `<article class="house-card ${house.toLowerCase()}" aria-label="House ${house}, ${loaded ? `${points} points, rank ${rank}` : 'loading'}"><div class="house-top"><span class="house-name">HOUSE ${house}</span><span class="house-rank">${loaded ? (leaders.length === 4 ? 'Ready' : rank === 1 ? (leaders.length > 1 ? 'Joint leader' : 'Leading') : `#${rank}`) : 'Loading'}</span></div><div class="house-letter" aria-hidden="true">${house}</div><div class="score-row"><span class="score">${loaded ? format(points) : '—'}</span><span class="score-label">points</span></div><div class="house-bar" aria-hidden="true"><div class="house-bar-fill" style="width:${maximum ? Math.max(0, points) / maximum * 100 : 0}%"></div></div></article>`).join('');
-  $('#total-points').textContent = loaded ? `${format(standings.reduce((sum, house) => sum + house.points, 0))} points in play` : '— points in play';
-  $('#race-message').textContent = !loaded ? 'The scoreboard is getting ready.' : leaders.length === 4 ? 'All four houses are tied. The next point could change everything.' : leaders.length > 1 ? `Houses ${leaders.map(house => house.house).join(' & ')} share the lead.` : `House ${leaders[0].house} leads by ${format(leaders[0].points - [...standings].sort((a,b) => b.points - a.points)[1].points)} points. The chase is on.`;
+  $('#house-grid').innerHTML = standings.map(({house, points}) => `<article class="house-card ${house.toLowerCase()}" aria-label="House ${house}, ${loaded ? `${points} points` : 'loading'}"><div class="house-top"><span class="house-name">HOUSE ${house}</span></div><div class="house-letter" aria-hidden="true">${house}</div><div class="score-row"><span class="score">${loaded ? format(points) : '—'}</span><span class="score-label">points</span></div><div class="house-bar" aria-hidden="true"><div class="house-bar-fill" style="width:${maximum ? Math.max(0, points) / maximum * 100 : 0}%"></div></div></article>`).join('');
+  $('#total-points').textContent = loaded ? `${format(standings.reduce((sum, house) => sum + house.points, 0))} points earned together` : '— points earned together';
+  $('#race-message').textContent = !loaded ? 'The scoreboard is getting ready.' : entries.length ? `${format(entries.length)} ${entries.length === 1 ? 'contribution' : 'contributions'} shared by our community.` : 'Share your next activity with the community.';
   renderActivity();
 }
 
@@ -22,7 +21,7 @@ function renderActivity() {
   $('#activity-list').innerHTML = filtered.length ? filtered.slice(0, visibleCount).map(entry => {
     const date = new Intl.DateTimeFormat('en-US', {month:'short',day:'numeric',year:'numeric'}).format(new Date(entry.date));
     return `<article class="activity-row"><span class="activity-badge ${entry.house.toLowerCase()}">${entry.house}</span><div class="activity-details"><p class="activity-reason">${escape(entry.reason)}</p><p class="activity-meta">${escape(entry.student)} · House ${entry.house} · ${escape(date)}</p></div><div class="activity-points ${entry.points < 0 ? 'negative' : ''}">${entry.points > 0 ? '+' : '−'}${format(Math.abs(entry.points))}<span>points</span></div></article>`;
-  }).join('') : `<div class="empty-state"><div class="empty-symbol" aria-hidden="true">+</div><h3>${!loaded ? 'Getting the latest points' : house !== 'all' ? `House ${house} is ready for its next win.` : 'Your next win belongs here.'}</h3><p>${!loaded ? 'Connecting to the shared scoreboard.' : 'The current house totals are recorded. Add your next activity and earned points to keep the competition going.'}</p></div>`;
+  }).join('') : `<div class="empty-state"><div class="empty-symbol" aria-hidden="true">+</div><h3>${!loaded ? 'Getting the latest points' : house !== 'all' ? `Share a moment with House ${house}.` : 'Share your next experience.'}</h3><p>${!loaded ? 'Connecting to the shared scoreboard.' : 'Record an activity, event, or moment you shared with your classmates.'}</p></div>`;
   $('#show-more').hidden = filtered.length <= visibleCount;
 }
 

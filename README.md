@@ -2,7 +2,7 @@
 
 Website: https://alisaayz.github.io/msba-housepoints/
 
-The shared competition scoreboard for houses M, S, B and A, using the supplied UCLA Anderson logo and the four house colors.
+The shared community activity and house-points board for houses M, S, B and A, using the supplied UCLA Anderson logo and the four house colors.
 
 ## Submit points
 
