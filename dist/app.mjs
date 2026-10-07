@@ -1,4 +1,4 @@
-import {HOUSES, getStandings, entryUrl, fetchEntries} from './ledger.mjs';
+import {HOUSES, getStandings, entryUrl, fetchEntries} from './ledger.mjs?v=2';
 const $ = selector => document.querySelector(selector);
 const format = number => new Intl.NumberFormat('en-US').format(number);
 let entries = [], loaded = false, busy = false, lastLoad = 0, visibleCount = 12;
