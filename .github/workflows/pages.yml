@@ -4,8 +4,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-  issues:
-    types: [opened, edited, closed, reopened, deleted, transferred]
 
 permissions:
   contents: read
@@ -19,7 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      issues: read
       pages: read
     steps:
       - uses: actions/checkout@v4
@@ -27,10 +24,8 @@ jobs:
         with:
           node-version: '22'
       - run: npm test
-      - name: Build the shared point snapshot
+      - name: Validate the static site
         run: npm run build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

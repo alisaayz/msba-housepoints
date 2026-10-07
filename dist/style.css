@@ -5,3 +5,8 @@
 :root{--ucla-blue:#2774AE;--ucla-gold:#FFD100}.site-header{border-bottom:3px solid var(--ucla-gold)}.brand-stack{display:flex;flex-direction:column;gap:6px}.brand-school{color:var(--ucla-blue);font-size:.875rem;font-weight:700;letter-spacing:.02em;line-height:1.2}.brand-program{display:flex;align-items:center;gap:16px}.brand-mark{color:var(--ucla-blue)}.brand-label{border-left:3px solid var(--ucla-gold)}.header-actions .dark{background:var(--ucla-blue)}.header-actions .dark:hover{background:#005587}.small-square{background:var(--ucla-blue)}
 @media(max-width:640px){.site-header{height:94px;gap:12px}.brand-program{gap:8px}.brand-school{font-size:.75rem}.brand-label{letter-spacing:.07em;padding-left:8px}.header-actions .button{gap:8px;padding-inline:12px}}
 @media(max-width:360px){.brand-program{gap:6px}.brand-mark{font-size:1.6rem}.brand-label{letter-spacing:0;padding-left:6px}.header-actions .button{padding-inline:8px}.header-actions .button span{display:none}}
+
+/* Supplied Anderson logo and uppercase program name. */
+.site-header{height:138px;background:#fff}.brand-school-logo{display:block;width:270px;height:auto;margin-left:-10px}.brand-mark{font-size:1.7rem;letter-spacing:-.045em}.brand-program{gap:12px}.brand-stack{gap:4px}
+@media(max-width:640px){.site-header{height:118px}.brand-school-logo{width:205px;margin-left:-8px}.brand-mark{font-size:1.4rem}.brand-program{gap:8px}.brand-label{font-size:.75rem}.header-actions .button{font-size:.85rem;padding:11px 10px;gap:6px}}
+@media(max-width:360px){.brand-school-logo{width:170px;margin-left:-6px}.brand-mark{font-size:1.25rem}.brand-program{gap:6px}.header-actions .button{font-size:.8rem;padding-inline:8px}}
