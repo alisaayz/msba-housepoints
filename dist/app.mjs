@@ -3,7 +3,7 @@ import {HOUSES, getStandings, STARTING_POINTS} from './ledger.mjs?v=7';
 import {validateStudentEntry,fetchScoreboard,saveStudentEntry} from './service.mjs?v=7';
 const $ = selector => document.querySelector(selector);
 const format = number => new Intl.NumberFormat('en-US').format(number);
-let entries = [], loaded = false, busy = false, lastLoad = 0, visibleCount = 12;
+let entries = [], loaded = false, busy = false, lastLoad = 0, showAllEntries = false;
 let houseNames=Object.fromEntries(HOUSES.map(house=>[house,'House '+house]));
 const houseName=house=>houseNames[house]||'House '+house;
 let totals={...STARTING_POINTS},saving=false,pendingEntry=null,dataRevision=0;
@@ -26,11 +26,13 @@ function render() {
 function renderActivity() {
   const house = $('#house-filter').value;
   const filtered = entries.filter(entry => house === 'all' || entry.house === house);
-  $('#activity-list').innerHTML = filtered.length ? filtered.slice(0, visibleCount).map(entry => {
+  $('#activity-list').innerHTML = filtered.length ? (showAllEntries ? filtered : filtered.slice(0, 4)).map(entry => {
     const date = new Intl.DateTimeFormat('en-US', {month:'short',day:'numeric',year:'numeric'}).format(new Date(entry.date));
     return `<article class="activity-row"><span class="activity-badge ${entry.house.toLowerCase()}">${entry.house}</span><div class="activity-details"><p class="activity-reason">${escape(entry.reason)}</p><p class="activity-meta">${escape(entry.student)} · ${escape(houseName(entry.house))} · ${escape(date)}</p></div><div class="activity-points ${entry.points < 0 ? 'negative' : ''}">${entry.points > 0 ? '+' : '−'}${format(Math.abs(entry.points))}<span>points</span></div></article>`;
   }).join('') : `<div class="empty-state"><div class="empty-symbol" aria-hidden="true">+</div><h3>${!loaded ? 'Getting the latest points' : house !== 'all' ? `Share a moment with ${escape(houseName(house))}.` : 'Share your next experience.'}</h3><p>${!loaded ? 'Connecting to the shared scoreboard.' : 'Record an activity, event, or moment you shared with your classmates.'}</p></div>`;
-  $('#show-more').hidden = filtered.length <= visibleCount;
+  $('#show-more').hidden = filtered.length <= 4;
+  $('#show-more').textContent = showAllEntries ? 'Show latest 4 entries' : 'View all entries';
+  $('#show-more').setAttribute('aria-expanded', String(showAllEntries));
 }
 
 async function refresh() {
@@ -60,8 +62,8 @@ $('#entry-toggle').addEventListener('click', () => {
 });
 $('#bottom-add').addEventListener('click', () => openEntry());
 $('#refresh').addEventListener('click', refresh);
-$('#house-filter').addEventListener('change', () => {visibleCount = 12; renderActivity();});
-$('#show-more').addEventListener('click', () => {visibleCount += 12; renderActivity();});
+$('#house-filter').addEventListener('change', () => {showAllEntries = false; renderActivity();});
+$('#show-more').addEventListener('click', () => {showAllEntries = !showAllEntries; renderActivity();});
 async function submitEntry(input) {
   if(saving) throw new Error('Your entry is being saved.');
   const valid=validateStudentEntry(input);

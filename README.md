@@ -16,6 +16,8 @@ All houses were reset to **zero** at the user's request. House totals are stored
 
 House names are shared across devices. Use **Save house names** in the unlocked editor to rename the labels (for example, M → Monsters); the fixed M/S/B/A identifiers and existing points remain intact. Resetting points preserves house names.
 
+The public history initially shows the latest four entries for the selected house filter. When more are available, **View all entries** expands the full list; **Show latest 4 entries** collapses it again.
+
 ## Password-protected editor
 
 Open **Manage points** near the bottom of the website and enter the editor password. An unlocked editor can save custom names for the four houses, set house totals, edit a student's name/house/points/activity, delete entries, restore deleted entries, or reset all points and entries. Use **Lock editor** when finished; reloading also locks it.
