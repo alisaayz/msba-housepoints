@@ -1,4 +1,4 @@
-import {initEditor} from './admin.mjs?v=13';
+import {initEditor} from './admin.mjs?v=16';
 import {HOUSES, getStandings, STARTING_POINTS} from './ledger.mjs?v=13';
 import {validateStudentEntry,fetchScoreboard,saveStudentEntry} from './service.mjs?v=13';
 const $ = selector => document.querySelector(selector);
